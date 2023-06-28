@@ -144,6 +144,7 @@
   <ItemGroup>
     <Compile Include="Bot.cs" />
     <Compile Include="Commands\GamesCommands.cs" />
+    <Compile Include="Commands\InfoCommands.cs" />
     <Compile Include="Commands\MiscCommands.cs" />
     <Compile Include="ConfigJSON.cs" />
     <Compile Include="External Classes\CardBuilder.cs" />

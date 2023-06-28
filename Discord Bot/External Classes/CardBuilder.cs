@@ -20,8 +20,8 @@ namespace Discord_Bot.External_Classes
             int number = Random.Next(0, this.cardNumbers.Length - 1);
             int suit = Random.Next(0, this.cardSuits.Length - 1);
 
-            this.SelectedNumber = this.cardNumbers.ElementAt(number);
-            this.SelectedCard = this.cardNumbers.ElementAt(number) + (" of ") + this.cardSuits.ElementAt(suit);
+            this.SelectedNumber = this.cardNumbers[number];
+            this.SelectedCard = this.cardNumbers[number] + (" of ") + this.cardSuits[suit];
         }
     }
 }
