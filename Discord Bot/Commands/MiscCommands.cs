@@ -1,6 +1,8 @@
-﻿using DSharpPlus.CommandsNext;
+﻿using DSharpPlus;
+using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
+using DSharpPlus.Interactivity.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,6 +14,7 @@ namespace Discord_Bot.Commands
     public class MiscCommands : BaseCommandModule
     {
         [Command("summon")]
+        [Cooldown(3, 30, CooldownBucketType.User)]
         public async Task TestCommand(CommandContext ctx)
         {
             await ctx.Channel.SendMessageAsync("Servant, Avenger. Summoned upon your request....What's with that look? Come on, here's the contract.");
@@ -31,17 +34,6 @@ namespace Discord_Bot.Commands
             await ctx.Channel.SendMessageAsync(answer.ToString());
         }
 
-        [Command("ping")]
-        public async Task Ping(CommandContext ctx)
-        {
-            var startTime = ctx.Message.CreationTimestamp.UtcDateTime;
-            var latency = DateTime.UtcNow - startTime;
-            var rounded = Math.Round(latency.TotalSeconds, 2);
-
-            var response = $"Hm, what's this? You're expecting me to say pong? How annoying, Pong! This is how long it took: {rounded} seconds";
-            await ctx.Channel.SendMessageAsync(response);
-        }
-
         [Command("info")]
         public async Task Info(CommandContext ctx)
         {
@@ -56,6 +48,98 @@ namespace Discord_Bot.Commands
                 .WithTimestamp(DateTimeOffset.UtcNow);
 
             await ctx.Channel.SendMessageAsync(embedMessage);
+        }
+
+        [Command("poll")]
+        [RequirePermissions(Permissions.ManageMessages)]
+        public async Task PollCommand(CommandContext ctx, int TimeLimit, string o1, string o2, string o3, string o4, params string[] question)
+        {
+            var interactivity = ctx.Client.GetInteractivity();
+            TimeSpan timer = TimeSpan.FromSeconds(TimeLimit);
+            DiscordEmoji[] emojis =
+                {
+                    DiscordEmoji.FromName(ctx.Client, ":one:", false),
+                    DiscordEmoji.FromName(ctx.Client, ":two:", false),
+                    DiscordEmoji.FromName(ctx.Client, ":three:", false),
+                    DiscordEmoji.FromName(ctx.Client, ":four:", false)
+                };
+
+            string optionsString = emojis[0] + ": " + o1 + "\n" +
+                                   emojis[1] + ": " + o2 + "\n" +
+                                   emojis[2] + ": " + o3 + "\n" +
+                                   emojis[3] + ": " + o4;
+
+            var pollMessage = new DiscordEmbedBuilder()
+                .WithColor(DiscordColor.Black)
+                .WithTitle(string.Join(" ", question))
+                .WithDescription(optionsString);
+
+            var putReactOn = await ctx.Channel.SendMessageAsync(pollMessage);
+
+            foreach (var emoji in emojis)
+            {
+                await putReactOn.CreateReactionAsync(emoji);
+            }
+
+            var result = await interactivity.CollectReactionsAsync(putReactOn, timer);
+
+            int count1 = 0;
+            int count2 = 0;
+            int count3 = 0;
+            int count4 = 0;
+
+            foreach (var emoji in result)
+            {
+                if (emoji.Emoji == emojis[0])
+                {
+                    count1++;
+                }
+                if (emoji.Emoji == emojis[1])
+                {
+                    count2++;
+                }
+                if (emoji.Emoji == emojis[2])
+                {
+                    count3++;
+                }
+                if (emoji.Emoji == emojis[3])
+                {
+                    count4++;
+                }
+            }
+
+            int totalVotes = count1 + count2 + count3 + count4;
+
+            var resultString = o1 + ": " + count1 + " votes \n" +
+                               o2 + ": " + count2 + " votes \n" +
+                               o3 + ": " + count3 + " votes \n" +
+                               o4 + ": " + count4 + " votes \n\n" +
+                               "Total number of votes: " + totalVotes;
+
+            var resultMessage = new DiscordEmbedBuilder()
+                .WithColor(DiscordColor.Green)
+                .WithTitle("Results of poll: " + string.Join(" ", question))
+                .WithDescription(resultString);
+
+            await ctx.Channel.SendMessageAsync(resultMessage);
+        }
+
+        [Command("button")]
+        public async Task ButtonCommand(CommandContext ctx)
+        {
+            DiscordButtonComponent button1 = new DiscordButtonComponent(ButtonStyle.Primary, "1", "Button 1");
+            DiscordButtonComponent button2 = new DiscordButtonComponent(ButtonStyle.Primary, "2", "Button 2");
+
+            var message = new DiscordMessageBuilder()
+                .AddEmbed(new DiscordEmbedBuilder()
+                .WithColor(DiscordColor.Black)
+                .WithTitle("This is a message with buttons")
+                .WithDescription("Please select a button")
+                )
+                .AddComponents(button1)
+                .AddComponents(button2);
+
+            await ctx.Channel.SendMessageAsync(message);
         }
     }
 }
